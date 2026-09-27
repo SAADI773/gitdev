@@ -70,25 +70,25 @@ const ICONS = {
     </svg>
   ),
   lightning: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
     </svg>
   ),
   code: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <polyline points="16 18 22 12 16 6" />
       <polyline points="8 6 2 12 8 18" />
     </svg>
   ),
   layers: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <polygon points="12 2 2 7 12 12 22 7 12 2" />
       <polyline points="2 17 12 22 22 17" />
       <polyline points="2 12 12 17 22 12" />
     </svg>
   ),
   fileText: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
       <polyline points="14 2 14 8 20 8" />
       <line x1="16" y1="13" x2="8" y2="13" />
@@ -121,9 +121,35 @@ const ICONS = {
     </svg>
   ),
   lock: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  ),
+  gitBranch: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="6" y1="3" x2="6" y2="15" />
+      <circle cx="18" cy="6" r="3" />
+      <circle cx="6" cy="18" r="3" />
+      <path d="M18 9a9 9 0 0 1-9 9" />
+    </svg>
+  ),
+  arrowLeft: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="19" y1="12" x2="5" y2="12" />
+      <polyline points="12 19 5 12 12 5" />
+    </svg>
+  ),
+  folder: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+    </svg>
+  ),
+  warning: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" strokeWidth="2">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
     </svg>
   )
 };
@@ -298,14 +324,14 @@ export default function App() {
       localStorage.setItem("gitdev_audit_history", JSON.stringify(updated));
       return updated;
     });
-    showToast("🗑️ Audit entry removed from history.");
+    showToast("Audit log entry removed.");
   }
 
   function handleClearAllHistory() {
     if (window.confirm("Are you sure you want to clear your entire audit history?")) {
       setHistory([]);
       localStorage.removeItem("gitdev_audit_history");
-      showToast("🧹 Audit history cleared!");
+      showToast("Audit history cleared.");
     }
   }
 
@@ -320,11 +346,10 @@ export default function App() {
 
   function handleAdminUnlock(e) {
     e.preventDefault();
-    // Default admin PIN: 7730 or admin123
     if (passcode.trim() === "7730" || passcode.trim() === "admin123" || passcode.trim() === "admin") {
       setAdminUnlocked(true);
       setPasscodeError(false);
-      showToast("🔓 Admin Command Center Unlocked");
+      showToast("Admin Command Center Unlocked");
     } else {
       setPasscodeError(true);
     }
@@ -392,7 +417,7 @@ ${(result.mistakes || []).map((m) => `- **[${(m.severity || "info").toUpperCase(
 ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("\n")}
 `;
     navigator.clipboard.writeText(md);
-    showToast("📋 Markdown review copied to clipboard!");
+    showToast("Markdown review copied to clipboard.");
   }
 
   function handleDownloadJson() {
@@ -404,7 +429,7 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
     a.download = `gitdev-review-${result.meta.name.replace("/", "-")}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast("💾 Review JSON downloaded!");
+    showToast("Review JSON downloaded.");
   }
 
   const filteredMistakes = (result?.mistakes || []).filter((m) => {
@@ -480,7 +505,10 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
           <main className="container">
             {/* Hero Section */}
             <section className="hero-section" id="auditor">
-              <div className="brand-badge">⚡ Powered by Gemini 2.0 Flash & GitHub API</div>
+              <div className="brand-badge">
+                {ICONS.lightning}
+                <span>Powered by Gemini 2.0 Flash & GitHub API</span>
+              </div>
               <h1 className="hero-title">Automated AI Code Audits for Any GitHub Repository</h1>
               <p className="hero-subtitle">
                 Instantly evaluate codebase architecture, detect security vulnerabilities, highlight
@@ -542,7 +570,12 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
                 </div>
               </form>
 
-              {error && <div className="error-box">⚠️ {error}</div>}
+              {error && (
+                <div className="error-box">
+                  {ICONS.warning}
+                  <span>{error}</span>
+                </div>
+              )}
 
               <AnimatePresence>
                 {loading && (
@@ -591,7 +624,9 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
                       </p>
                       <div className="repo-badges">
                         {result.meta.language && (
-                          <span className="badge">🔤 {result.meta.language}</span>
+                          <span className="badge">
+                            {ICONS.code} {result.meta.language}
+                          </span>
                         )}
                         {result.meta.stars !== undefined && (
                           <span className="badge">
@@ -599,10 +634,14 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
                           </span>
                         )}
                         {result.meta.branch && (
-                          <span className="badge">🌿 {result.meta.branch}</span>
+                          <span className="badge">
+                            {ICONS.gitBranch} {result.meta.branch}
+                          </span>
                         )}
                         {result.isCached && (
-                          <span className="badge badge-cached">⚡ Cached Evaluation</span>
+                          <span className="badge badge-cached">
+                            {ICONS.lightning} Cached Evaluation
+                          </span>
                         )}
                       </div>
                     </div>
@@ -657,12 +696,19 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
 
                   {/* Summary Card */}
                   <div className="glass summary-card">
-                    <div className="card-title">📌 Executive Summary</div>
+                    <div className="card-title">
+                      {ICONS.fileText} Executive Summary
+                    </div>
                     <div className="summary-text">{result.summary}</div>
 
                     {result.architectureOverview && (
                       <div className="arch-box">
-                        <strong>🏛️ Architecture Pattern:</strong> {result.architectureOverview}
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          {ICONS.layers}
+                          <span>
+                            <strong>Architecture Pattern:</strong> {result.architectureOverview}
+                          </span>
+                        </div>
                       </div>
                     )}
 
@@ -693,7 +739,7 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
                   {result.quickWins?.length > 0 && (
                     <div className="glass quick-wins-card">
                       <div className="card-title" style={{ color: "var(--accent-emerald)" }}>
-                        🚀 High Impact Quick Wins
+                        {ICONS.lightning} High Impact Quick Wins
                       </div>
                       <ul className="quick-win-list">
                         {result.quickWins.map((win, i) => (
@@ -741,7 +787,8 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
                         <span>Copy Markdown</span>
                       </button>
                       <button className="btn-secondary" onClick={handleDownloadJson}>
-                        💾 Export JSON
+                        {ICONS.fileText}
+                        <span>Export JSON</span>
                       </button>
                     </div>
                   </div>
@@ -781,7 +828,7 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
                   {result.filesReviewed?.length > 0 && (
                     <div className="glass files-card">
                       <div className="card-title">
-                        📁 Sampled Files ({result.filesReviewed.length})
+                        {ICONS.folder} Sampled Files ({result.filesReviewed.length})
                       </div>
                       <div className="files-grid">
                         {result.filesReviewed.map((f, i) => (
@@ -899,7 +946,7 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
                   className="footer-admin-link"
                   onClick={() => setViewMode("admin")}
                 >
-                  🔒 Admin Portal
+                  {ICONS.lock} Admin Portal
                 </span>
               </div>
             </div>
@@ -922,7 +969,8 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
               className="btn-secondary"
               onClick={() => setViewMode("public")}
             >
-              ⬅ Return to Public Website
+              {ICONS.arrowLeft}
+              <span>Return to Public Website</span>
             </button>
           </div>
 
@@ -945,8 +993,9 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
                   autoFocus
                 />
                 {passcodeError && (
-                  <div style={{ color: "var(--accent-rose)", fontSize: "0.82rem", marginBottom: 12 }}>
-                    ❌ Invalid Security Passcode (Try PIN: 7730)
+                  <div style={{ color: "var(--accent-rose)", fontSize: "0.82rem", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                    {ICONS.warning}
+                    <span>Invalid Security Passcode (Try PIN: 7730)</span>
                   </div>
                 )}
                 <button type="submit" className="btn-primary" style={{ width: "100%", justifyContent: "center" }}>
@@ -1051,9 +1100,13 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
                           <div>
                             <div className="history-repo-name">{item.meta.name}</div>
                             <div className="history-repo-meta">
-                              <span>⭐ {item.meta.stars || 0} stars</span>
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                                {ICONS.star} {item.meta.stars || 0} stars
+                              </span>
                               <span>•</span>
-                              <span>🔤 {item.meta.language || "Unknown"}</span>
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                                {ICONS.code} {item.meta.language || "Unknown"}
+                              </span>
                               <span>•</span>
                               <span>Score: {item.overallScore}/100</span>
                               <span>•</span>
