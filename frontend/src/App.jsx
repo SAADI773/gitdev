@@ -335,10 +335,19 @@ export default function App() {
     }
   }
 
+  function returnToPublicSite() {
+    setViewMode("public");
+    if (window.history && window.history.pushState) {
+      window.history.pushState("", document.title, window.location.pathname + window.location.search);
+    } else {
+      window.location.hash = "";
+    }
+  }
+
   function handleInspectHistoryItem(auditData) {
     setResult(auditData);
     setRepoUrl(`https://github.com/${auditData.meta.name}`);
-    setViewMode("public");
+    returnToPublicSite();
     setTimeout(() => {
       document.getElementById("results-dashboard")?.scrollIntoView({ behavior: "smooth" });
     }, 100);
@@ -351,10 +360,9 @@ async function hashPasscode(str) {
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-// SHA-256 hashes of authorized admin passcodes (Cannot be reversed/decrypted)
+// Cryptographic SHA-256 hash of authorized admin password "dev@456@"
 const AUTHORIZED_ADMIN_HASHES = new Set([
-  "212375a537417e324d381e18e45023efd4f801ef3b35f0fe3983a2b58bdca4f6", // 7730
-  "a3cc6ebf69865a1f603f4a29d9f633d1c34dfb60ff46150ed6a0843d5fbaed57"  // admin773
+  "9646203c1c5f534cf7c4d9735ffea5fd9951c4841a5f462a7dbf4de8b1f44aef"
 ]);
 
   async function handleAdminUnlock(e) {
@@ -981,7 +989,7 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
 
             <button
               className="btn-secondary"
-              onClick={() => setViewMode("public")}
+              onClick={returnToPublicSite}
             >
               {ICONS.arrowLeft}
               <span>Return to Public Website</span>
