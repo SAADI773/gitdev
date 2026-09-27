@@ -344,9 +344,23 @@ export default function App() {
     }, 100);
   }
 
-  function handleAdminUnlock(e) {
+async function hashPasscode(str) {
+  const msgBuffer = new TextEncoder().encode(str.trim());
+  const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// SHA-256 hashes of authorized admin passcodes (Cannot be reversed/decrypted)
+const AUTHORIZED_ADMIN_HASHES = new Set([
+  "212375a537417e324d381e18e45023efd4f801ef3b35f0fe3983a2b58bdca4f6", // 7730
+  "a3cc6ebf69865a1f603f4a29d9f633d1c34dfb60ff46150ed6a0843d5fbaed57"  // admin773
+]);
+
+  async function handleAdminUnlock(e) {
     e.preventDefault();
-    if (passcode.trim() === "7730" || passcode.trim() === "admin123" || passcode.trim() === "admin") {
+    const inputHash = await hashPasscode(passcode);
+    if (AUTHORIZED_ADMIN_HASHES.has(inputHash)) {
       setAdminUnlocked(true);
       setPasscodeError(false);
       showToast("Admin Command Center Unlocked");
@@ -995,7 +1009,7 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
                 {passcodeError && (
                   <div style={{ color: "var(--accent-rose)", fontSize: "0.82rem", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
                     {ICONS.warning}
-                    <span>Invalid Security Passcode (Try PIN: 7730)</span>
+                    <span>Invalid Security Passcode</span>
                   </div>
                 )}
                 <button type="submit" className="btn-primary" style={{ width: "100%", justifyContent: "center" }}>
