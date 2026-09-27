@@ -124,16 +124,6 @@ body {
   color: var(--text-primary);
 }
 
-.badge-count {
-  background: rgba(147, 51, 234, 0.25);
-  border: 1px solid rgba(147, 51, 234, 0.4);
-  color: var(--accent-violet);
-  padding: 1px 7px;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 700;
-}
-
 .nav-btn {
   background: rgba(167, 139, 250, 0.12);
   border: 1px solid rgba(167, 139, 250, 0.3);
@@ -329,9 +319,74 @@ body {
   cursor: pointer;
 }
 
-/* User Analytics & History Dashboard */
-.history-dashboard {
-  padding: 50px 0 70px;
+/* Separate Admin Portal */
+.admin-portal {
+  padding: 40px 0 80px;
+}
+
+.admin-lock-card {
+  max-width: 440px;
+  margin: 60px auto;
+  padding: 40px 32px;
+  text-align: center;
+}
+
+.admin-lock-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  color: var(--accent-rose);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.admin-pass-input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  font-size: 1rem;
+  margin: 16px 0;
+  outline: none;
+  text-align: center;
+  letter-spacing: 0.2em;
+}
+
+.admin-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--accent-emerald);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-emerald);
+  box-shadow: 0 0 8px var(--accent-emerald);
 }
 
 .stats-grid {
@@ -1083,6 +1138,19 @@ body {
   width: 24px;
   height: 24px;
   border-radius: 6px;
+}
+
+.footer-admin-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.78rem;
+  transition: color 0.2s ease;
+  cursor: pointer;
+}
+
+.footer-admin-link:hover {
+  color: var(--accent-violet);
+  text-decoration: underline;
 }
 
 /* Toast */

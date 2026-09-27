@@ -107,12 +107,6 @@ const ICONS = {
       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
     </svg>
   ),
-  history: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
-  ),
   chart: (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <line x1="18" y1="20" x2="18" y2="10" />
@@ -124,6 +118,12 @@ const ICONS = {
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
       <circle cx="12" cy="12" r="3" />
+    </svg>
+  ),
+  lock: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </svg>
   )
 };
@@ -225,6 +225,27 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState("");
   const [searchHistoryQuery, setSearchHistoryQuery] = useState("");
 
+  // Mode routing: "public" vs "admin"
+  const [viewMode, setViewMode] = useState(() => {
+    return window.location.hash === "#admin" || window.location.pathname === "/admin"
+      ? "admin"
+      : "public";
+  });
+
+  const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const [passcode, setPasscode] = useState("");
+  const [passcodeError, setPasscodeError] = useState(false);
+
+  useEffect(() => {
+    function handleHashChange() {
+      if (window.location.hash === "#admin" || window.location.pathname === "/admin") {
+        setViewMode("admin");
+      }
+    }
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
   // Track visit count
   const [visitCount, setVisitCount] = useState(1);
   useEffect(() => {
@@ -265,7 +286,7 @@ export default function App() {
       try {
         localStorage.setItem("gitdev_audit_history", JSON.stringify(updated));
       } catch {
-        // Fallback if local storage full
+        // Fallback
       }
       return updated;
     });
@@ -291,9 +312,22 @@ export default function App() {
   function handleInspectHistoryItem(auditData) {
     setResult(auditData);
     setRepoUrl(`https://github.com/${auditData.meta.name}`);
+    setViewMode("public");
     setTimeout(() => {
       document.getElementById("results-dashboard")?.scrollIntoView({ behavior: "smooth" });
     }, 100);
+  }
+
+  function handleAdminUnlock(e) {
+    e.preventDefault();
+    // Default admin PIN: 7730 or admin123
+    if (passcode.trim() === "7730" || passcode.trim() === "admin123" || passcode.trim() === "admin") {
+      setAdminUnlocked(true);
+      setPasscodeError(false);
+      showToast("🔓 Admin Command Center Unlocked");
+    } else {
+      setPasscodeError(true);
+    }
   }
 
   function showToast(msg) {
@@ -378,14 +412,13 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
     return (m.severity || "").toLowerCase() === severityFilter;
   });
 
-  // Calculate user analytics
+  // Calculate admin analytics
   const totalAudits = history.length;
   const avgScore =
     totalAudits > 0
       ? Math.round(history.reduce((sum, h) => sum + (h.overallScore || 0), 0) / totalAudits)
       : 0;
 
-  // Calculate most frequent language
   const languageCounts = {};
   history.forEach((h) => {
     if (h.meta?.language) {
@@ -410,594 +443,649 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
     <div>
       {toastMessage && <div className="toast">{toastMessage}</div>}
 
-      {/* Header Navigation */}
-      <nav className="navbar">
-        <div className="nav-container">
-          <a href="#" className="nav-brand">
-            <img src="/logo.png" alt="GitDev Logo" className="brand-logo-img" />
-            <span className="brand-title">GitDev</span>
-          </a>
+      {/* Main Public Interface */}
+      {viewMode === "public" ? (
+        <div>
+          {/* Header Navigation */}
+          <nav className="navbar">
+            <div className="nav-container">
+              <a href="#" className="nav-brand">
+                <img src="/logo.png" alt="GitDev Logo" className="brand-logo-img" />
+                <span className="brand-title">GitDev</span>
+              </a>
 
-          <div className="nav-links">
-            <a href="#auditor" className="nav-link">
-              Auditor
-            </a>
-            <a href="#user-dashboard" className="nav-link">
-              <span>My History</span>
-              {history.length > 0 && <span className="badge-count">{history.length}</span>}
-            </a>
-            <a href="#features" className="nav-link">
-              Features
-            </a>
-            <a href="#how-it-works" className="nav-link">
-              How It Works
-            </a>
-            <a
-              href="https://github.com"
-              target="_blank"
-              rel="noreferrer"
-              className="nav-btn"
-            >
-              {ICONS.github}
-              <span>GitHub</span>
-            </a>
-          </div>
-        </div>
-      </nav>
-
-      <main className="container">
-        {/* Hero Section */}
-        <section className="hero-section" id="auditor">
-          <div className="brand-badge">⚡ Powered by Gemini 2.0 Flash & GitHub API</div>
-          <h1 className="hero-title">Automated AI Code Audits for Any GitHub Repository</h1>
-          <p className="hero-subtitle">
-            Instantly evaluate codebase architecture, detect security vulnerabilities, highlight
-            code smells, and uncover high-impact quick wins.
-          </p>
-
-          {/* Search Bar Console */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleEvaluate();
-            }}
-            className="search-form"
-          >
-            <div className="glass search-bar">
-              <span className="search-icon">{ICONS.search}</span>
-              <input
-                type="text"
-                className="search-input"
-                placeholder="https://github.com/owner/repo"
-                value={repoUrl}
-                onChange={(e) => setRepoUrl(e.target.value)}
-              />
-              <button className="btn-primary" type="submit" disabled={loading}>
-                {loading ? (
-                  <motion.div
-                    className="spinner"
-                    animate={{ rotate: 360 }}
-                    transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }}
-                    style={{ width: 18, height: 18, margin: 0 }}
-                  >
-                    {ICONS.spinner}
-                  </motion.div>
-                ) : (
-                  ICONS.search
-                )}
-                <span>{loading ? "Auditing..." : "Audit Repository"}</span>
-              </button>
-            </div>
-
-            <div className="search-options">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={forceRefresh}
-                  onChange={(e) => setForceRefresh(e.target.checked)}
-                />
-                <span>Bypass cached review</span>
-              </label>
-            </div>
-
-            <div className="quick-picks">
-              <span className="quick-picks-label">Quick test repos:</span>
-              {QUICK_REPOS.map((r) => (
-                <button key={r} type="button" className="chip-btn" onClick={() => handleQuickPick(r)}>
-                  {r}
-                </button>
-              ))}
-            </div>
-          </form>
-
-          {error && <div className="error-box">⚠️ {error}</div>}
-
-          <AnimatePresence>
-            {loading && (
-              <motion.div
-                className="glass loading-box"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-              >
-                <motion.div
-                  className="spinner"
-                  animate={{ rotate: 360 }}
-                  transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }}
+              <div className="nav-links">
+                <a href="#auditor" className="nav-link">
+                  Auditor
+                </a>
+                <a href="#features" className="nav-link">
+                  Features
+                </a>
+                <a href="#how-it-works" className="nav-link">
+                  How It Works
+                </a>
+                <a
+                  href="https://github.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="nav-btn"
                 >
-                  {ICONS.spinner}
-                </motion.div>
-                <div className="loading-text">Performing Repository Audit</div>
-                <div className="loading-subtext">
-                  Fetching file tree, extracting key source files, and running Gemini AI evaluation...
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </section>
-
-        {/* Results Dashboard */}
-        {result && (
-          <section id="results-dashboard" style={{ paddingTop: 30, marginBottom: 60 }}>
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-              {/* Header Card */}
-              <div className="glass repo-header-card">
-                <div className="repo-info">
-                  <h2>
-                    <a
-                      href={result.meta.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="repo-link"
-                    >
-                      {result.meta.name}
-                      {ICONS.external}
-                    </a>
-                  </h2>
-                  <p className="repo-desc">
-                    {result.meta.description || "No repository description provided."}
-                  </p>
-                  <div className="repo-badges">
-                    {result.meta.language && (
-                      <span className="badge">🔤 {result.meta.language}</span>
-                    )}
-                    {result.meta.stars !== undefined && (
-                      <span className="badge">
-                        {ICONS.star} {result.meta.stars.toLocaleString()} stars
-                      </span>
-                    )}
-                    {result.meta.branch && (
-                      <span className="badge">🌿 {result.meta.branch}</span>
-                    )}
-                    {result.isCached && (
-                      <span className="badge badge-cached">⚡ Cached Evaluation</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* 3-Metrics Grid */}
-              <div className="metrics-grid">
-                <div className="glass metric-card">
-                  <ScoreGauge score={result.overallScore} grade={result.grade} />
-                  <div className="metric-meta">
-                    <h3>Overall Quality</h3>
-                    <div className="metric-grade">
-                      Score {result.overallScore}{" "}
-                      <span className={`grade-${(result.grade || "B")[0]}`}>
-                        ({result.grade || "B"})
-                      </span>
-                    </div>
-                    <div className="metric-sub">Architectural & code health score</div>
-                  </div>
-                </div>
-
-                <div className="glass metric-card">
-                  <div
-                    className={`metric-grade grade-${result.securityRating || "A"}`}
-                    style={{ fontSize: "2.4rem", width: 64, textAlign: "center" }}
-                  >
-                    {result.securityRating || "A"}
-                  </div>
-                  <div className="metric-meta">
-                    <h3>Security Posture</h3>
-                    <div className="metric-grade">Rating {result.securityRating || "A"}</div>
-                    <div className="metric-sub">Vulnerability & hygiene status</div>
-                  </div>
-                </div>
-
-                <div className="glass metric-card">
-                  <div
-                    className={`metric-grade grade-${result.maintainabilityRating || "A"}`}
-                    style={{ fontSize: "2.4rem", width: 64, textAlign: "center" }}
-                  >
-                    {result.maintainabilityRating || "A"}
-                  </div>
-                  <div className="metric-meta">
-                    <h3>Maintainability</h3>
-                    <div className="metric-grade">
-                      Rating {result.maintainabilityRating || "A"}
-                    </div>
-                    <div className="metric-sub">Readability & structure grade</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Summary Card */}
-              <div className="glass summary-card">
-                <div className="card-title">📌 Executive Summary</div>
-                <div className="summary-text">{result.summary}</div>
-
-                {result.architectureOverview && (
-                  <div className="arch-box">
-                    <strong>🏛️ Architecture Pattern:</strong> {result.architectureOverview}
-                  </div>
-                )}
-
-                {result.techStack?.length > 0 && (
-                  <div>
-                    <div
-                      style={{
-                        fontSize: "0.8rem",
-                        color: "var(--text-muted)",
-                        marginBottom: 8,
-                        fontWeight: 600,
-                      }}
-                    >
-                      DETECTED TECH STACK
-                    </div>
-                    <div className="tech-tags">
-                      {result.techStack.map((tech, i) => (
-                        <span className="tech-tag" key={i}>
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Quick Wins Card */}
-              {result.quickWins?.length > 0 && (
-                <div className="glass quick-wins-card">
-                  <div className="card-title" style={{ color: "var(--accent-emerald)" }}>
-                    🚀 High Impact Quick Wins
-                  </div>
-                  <ul className="quick-win-list">
-                    {result.quickWins.map((win, i) => (
-                      <li key={i} className="quick-win-item">
-                        <span className="quick-win-icon">{ICONS.check}</span>
-                        <span>{win}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Filter Bar & Export Actions */}
-              <div className="filter-action-bar">
-                <div className="filter-chips">
-                  <button
-                    className={`filter-chip ${severityFilter === "all" ? "active" : ""}`}
-                    onClick={() => setSeverityFilter("all")}
-                  >
-                    All Concerns ({(result.mistakes || []).length})
-                  </button>
-                  <button
-                    className={`filter-chip ${severityFilter === "high" ? "active" : ""}`}
-                    onClick={() => setSeverityFilter("high")}
-                  >
-                    High Severity
-                  </button>
-                  <button
-                    className={`filter-chip ${severityFilter === "medium" ? "active" : ""}`}
-                    onClick={() => setSeverityFilter("medium")}
-                  >
-                    Medium
-                  </button>
-                  <button
-                    className={`filter-chip ${severityFilter === "low" ? "active" : ""}`}
-                    onClick={() => setSeverityFilter("low")}
-                  >
-                    Low
-                  </button>
-                </div>
-
-                <div className="export-btns">
-                  <button className="btn-secondary" onClick={handleCopyMarkdown}>
-                    {ICONS.copy}
-                    <span>Copy Markdown</span>
-                  </button>
-                  <button className="btn-secondary" onClick={handleDownloadJson}>
-                    💾 Export JSON
-                  </button>
-                </div>
-              </div>
-
-              {/* Strengths */}
-              <Section
-                title="Exemplary Strengths"
-                icon={ICONS.strength}
-                items={result.strengths}
-                meta={result.meta}
-              />
-
-              {/* Mistakes */}
-              <Section
-                title="Mistakes & Code Smells"
-                icon={ICONS.mistake}
-                items={filteredMistakes}
-                meta={result.meta}
-                renderExtra={(item) =>
-                  item.severity && (
-                    <span className={`severity-pill ${item.severity}`}>
-                      {item.severity}
-                    </span>
-                  )
-                }
-              />
-
-              {/* Improvements */}
-              <Section
-                title="Actionable Improvements"
-                icon={ICONS.improvement}
-                items={result.improvements}
-                meta={result.meta}
-              />
-
-              {/* Files Sampled */}
-              {result.filesReviewed?.length > 0 && (
-                <div className="glass files-card">
-                  <div className="card-title">
-                    📁 Sampled Files ({result.filesReviewed.length})
-                  </div>
-                  <div className="files-grid">
-                    {result.filesReviewed.map((f, i) => (
-                      <div key={i} className="file-badge">
-                        <span>{f.path}</span>
-                        <span className="file-size">{(f.size / 1024).toFixed(1)} KB</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          </section>
-        )}
-
-        {/* User Analytics & Audit History Dashboard */}
-        <section className="history-dashboard" id="user-dashboard">
-          <div className="section-head" style={{ marginBottom: 36 }}>
-            <div className="section-tag">PERSONAL ANALYTICS</div>
-            <h2 className="section-title-text">My Audit Dashboard & History</h2>
-          </div>
-
-          {/* 4 Stats Grid */}
-          <div className="stats-grid">
-            <div className="glass stat-card">
-              <div className="stat-icon">{ICONS.eye}</div>
-              <div>
-                <div className="stat-value">{visitCount}</div>
-                <div className="stat-label">Total Visits</div>
+                  {ICONS.github}
+                  <span>GitHub</span>
+                </a>
               </div>
             </div>
+          </nav>
 
-            <div className="glass stat-card">
-              <div className="stat-icon">{ICONS.chart}</div>
-              <div>
-                <div className="stat-value">{totalAudits}</div>
-                <div className="stat-label">Repos Audited</div>
-              </div>
-            </div>
+          <main className="container">
+            {/* Hero Section */}
+            <section className="hero-section" id="auditor">
+              <div className="brand-badge">⚡ Powered by Gemini 2.0 Flash & GitHub API</div>
+              <h1 className="hero-title">Automated AI Code Audits for Any GitHub Repository</h1>
+              <p className="hero-subtitle">
+                Instantly evaluate codebase architecture, detect security vulnerabilities, highlight
+                code smells, and uncover high-impact quick wins.
+              </p>
 
-            <div className="glass stat-card">
-              <div className="stat-icon">{ICONS.star}</div>
-              <div>
-                <div className="stat-value">{avgScore} / 100</div>
-                <div className="stat-label">Average Score</div>
-              </div>
-            </div>
-
-            <div className="glass stat-card">
-              <div className="stat-icon">{ICONS.code}</div>
-              <div>
-                <div className="stat-value" style={{ fontSize: "1.4rem" }}>
-                  {topLanguage}
-                </div>
-                <div className="stat-label">Top Language</div>
-              </div>
-            </div>
-          </div>
-
-          {/* History List Card */}
-          <div className="glass history-card-container">
-            <div className="history-header">
-              <div className="history-title-group">
-                <h3>Audited Repositories History</h3>
-                <p>Saved locally in your browser session for quick access</p>
-              </div>
-
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <div className="history-search">
-                  {ICONS.search}
+              {/* Search Bar Console */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleEvaluate();
+                }}
+                className="search-form"
+              >
+                <div className="glass search-bar">
+                  <span className="search-icon">{ICONS.search}</span>
                   <input
                     type="text"
-                    placeholder="Search history by repo or language..."
-                    value={searchHistoryQuery}
-                    onChange={(e) => setSearchHistoryQuery(e.target.value)}
+                    className="search-input"
+                    placeholder="https://github.com/owner/repo"
+                    value={repoUrl}
+                    onChange={(e) => setRepoUrl(e.target.value)}
                   />
+                  <button className="btn-primary" type="submit" disabled={loading}>
+                    {loading ? (
+                      <motion.div
+                        className="spinner"
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }}
+                        style={{ width: 18, height: 18, margin: 0 }}
+                      >
+                        {ICONS.spinner}
+                      </motion.div>
+                    ) : (
+                      ICONS.search
+                    )}
+                    <span>{loading ? "Auditing..." : "Audit Repository"}</span>
+                  </button>
                 </div>
 
-                {history.length > 0 && (
-                  <button className="btn-secondary" onClick={handleClearAllHistory}>
-                    {ICONS.trash}
-                    <span>Clear All</span>
-                  </button>
-                )}
-              </div>
-            </div>
+                <div className="search-options">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={forceRefresh}
+                      onChange={(e) => setForceRefresh(e.target.checked)}
+                    />
+                    <span>Bypass cached review</span>
+                  </label>
+                </div>
 
-            {filteredHistory.length === 0 ? (
-              <div className="empty-history">
-                {searchHistoryQuery
-                  ? "No audited repositories match your search."
-                  : "No audit history yet. Audit a repository above to track it here!"}
-              </div>
-            ) : (
-              <div className="history-list">
-                {filteredHistory.map((item, index) => (
-                  <div key={index} className="history-item">
-                    <div className="history-item-left">
-                      <div
-                        className="history-grade-pill"
-                        style={{
-                          color:
-                            item.overallScore >= 80
-                              ? "#10b981"
-                              : item.overallScore >= 68
-                              ? "#06b6d4"
-                              : item.overallScore >= 50
-                              ? "#f59e0b"
-                              : "#f43f5e",
-                        }}
-                      >
-                        {item.grade || "B"}
+                <div className="quick-picks">
+                  <span className="quick-picks-label">Quick test repos:</span>
+                  {QUICK_REPOS.map((r) => (
+                    <button key={r} type="button" className="chip-btn" onClick={() => handleQuickPick(r)}>
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </form>
+
+              {error && <div className="error-box">⚠️ {error}</div>}
+
+              <AnimatePresence>
+                {loading && (
+                  <motion.div
+                    className="glass loading-box"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                  >
+                    <motion.div
+                      className="spinner"
+                      animate={{ rotate: 360 }}
+                      transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }}
+                    >
+                      {ICONS.spinner}
+                    </motion.div>
+                    <div className="loading-text">Performing Repository Audit</div>
+                    <div className="loading-subtext">
+                      Fetching file tree, extracting key source files, and running Gemini AI evaluation...
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </section>
+
+            {/* Results Dashboard */}
+            {result && (
+              <section id="results-dashboard" style={{ paddingTop: 30, marginBottom: 60 }}>
+                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+                  {/* Header Card */}
+                  <div className="glass repo-header-card">
+                    <div className="repo-info">
+                      <h2>
+                        <a
+                          href={result.meta.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="repo-link"
+                        >
+                          {result.meta.name}
+                          {ICONS.external}
+                        </a>
+                      </h2>
+                      <p className="repo-desc">
+                        {result.meta.description || "No repository description provided."}
+                      </p>
+                      <div className="repo-badges">
+                        {result.meta.language && (
+                          <span className="badge">🔤 {result.meta.language}</span>
+                        )}
+                        {result.meta.stars !== undefined && (
+                          <span className="badge">
+                            {ICONS.star} {result.meta.stars.toLocaleString()} stars
+                          </span>
+                        )}
+                        {result.meta.branch && (
+                          <span className="badge">🌿 {result.meta.branch}</span>
+                        )}
+                        {result.isCached && (
+                          <span className="badge badge-cached">⚡ Cached Evaluation</span>
+                        )}
                       </div>
-                      <div>
-                        <div className="history-repo-name">{item.meta.name}</div>
-                        <div className="history-repo-meta">
-                          <span>⭐ {item.meta.stars || 0} stars</span>
-                          <span>•</span>
-                          <span>🔤 {item.meta.language || "Unknown"}</span>
-                          <span>•</span>
-                          <span>Score: {item.overallScore}/100</span>
-                          <span>•</span>
-                          <span>{item.evaluatedAtFormatted || "Recently"}</span>
+                    </div>
+                  </div>
+
+                  {/* 3-Metrics Grid */}
+                  <div className="metrics-grid">
+                    <div className="glass metric-card">
+                      <ScoreGauge score={result.overallScore} grade={result.grade} />
+                      <div className="metric-meta">
+                        <h3>Overall Quality</h3>
+                        <div className="metric-grade">
+                          Score {result.overallScore}{" "}
+                          <span className={`grade-${(result.grade || "B")[0]}`}>
+                            ({result.grade || "B"})
+                          </span>
                         </div>
+                        <div className="metric-sub">Architectural & code health score</div>
                       </div>
                     </div>
 
-                    <div className="history-item-right">
-                      <button
-                        className="btn-secondary"
-                        onClick={() => handleInspectHistoryItem(item)}
+                    <div className="glass metric-card">
+                      <div
+                        className={`metric-grade grade-${result.securityRating || "A"}`}
+                        style={{ fontSize: "2.4rem", width: 64, textAlign: "center" }}
                       >
-                        Re-Inspect
+                        {result.securityRating || "A"}
+                      </div>
+                      <div className="metric-meta">
+                        <h3>Security Posture</h3>
+                        <div className="metric-grade">Rating {result.securityRating || "A"}</div>
+                        <div className="metric-sub">Vulnerability & hygiene status</div>
+                      </div>
+                    </div>
+
+                    <div className="glass metric-card">
+                      <div
+                        className={`metric-grade grade-${result.maintainabilityRating || "A"}`}
+                        style={{ fontSize: "2.4rem", width: 64, textAlign: "center" }}
+                      >
+                        {result.maintainabilityRating || "A"}
+                      </div>
+                      <div className="metric-meta">
+                        <h3>Maintainability</h3>
+                        <div className="metric-grade">
+                          Rating {result.maintainabilityRating || "A"}
+                        </div>
+                        <div className="metric-sub">Readability & structure grade</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Summary Card */}
+                  <div className="glass summary-card">
+                    <div className="card-title">📌 Executive Summary</div>
+                    <div className="summary-text">{result.summary}</div>
+
+                    {result.architectureOverview && (
+                      <div className="arch-box">
+                        <strong>🏛️ Architecture Pattern:</strong> {result.architectureOverview}
+                      </div>
+                    )}
+
+                    {result.techStack?.length > 0 && (
+                      <div>
+                        <div
+                          style={{
+                            fontSize: "0.8rem",
+                            color: "var(--text-muted)",
+                            marginBottom: 8,
+                            fontWeight: 600,
+                          }}
+                        >
+                          DETECTED TECH STACK
+                        </div>
+                        <div className="tech-tags">
+                          {result.techStack.map((tech, i) => (
+                            <span className="tech-tag" key={i}>
+                              {tech}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Quick Wins Card */}
+                  {result.quickWins?.length > 0 && (
+                    <div className="glass quick-wins-card">
+                      <div className="card-title" style={{ color: "var(--accent-emerald)" }}>
+                        🚀 High Impact Quick Wins
+                      </div>
+                      <ul className="quick-win-list">
+                        {result.quickWins.map((win, i) => (
+                          <li key={i} className="quick-win-item">
+                            <span className="quick-win-icon">{ICONS.check}</span>
+                            <span>{win}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Filter Bar & Export Actions */}
+                  <div className="filter-action-bar">
+                    <div className="filter-chips">
+                      <button
+                        className={`filter-chip ${severityFilter === "all" ? "active" : ""}`}
+                        onClick={() => setSeverityFilter("all")}
+                      >
+                        All Concerns ({(result.mistakes || []).length})
                       </button>
                       <button
-                        className="btn-icon-danger"
-                        title="Delete from history"
-                        onClick={() => handleDeleteHistoryItem(item.meta.name)}
+                        className={`filter-chip ${severityFilter === "high" ? "active" : ""}`}
+                        onClick={() => setSeverityFilter("high")}
                       >
-                        {ICONS.trash}
+                        High Severity
+                      </button>
+                      <button
+                        className={`filter-chip ${severityFilter === "medium" ? "active" : ""}`}
+                        onClick={() => setSeverityFilter("medium")}
+                      >
+                        Medium
+                      </button>
+                      <button
+                        className={`filter-chip ${severityFilter === "low" ? "active" : ""}`}
+                        onClick={() => setSeverityFilter("low")}
+                      >
+                        Low
+                      </button>
+                    </div>
+
+                    <div className="export-btns">
+                      <button className="btn-secondary" onClick={handleCopyMarkdown}>
+                        {ICONS.copy}
+                        <span>Copy Markdown</span>
+                      </button>
+                      <button className="btn-secondary" onClick={handleDownloadJson}>
+                        💾 Export JSON
                       </button>
                     </div>
                   </div>
-                ))}
-              </div>
+
+                  {/* Strengths */}
+                  <Section
+                    title="Exemplary Strengths"
+                    icon={ICONS.strength}
+                    items={result.strengths}
+                    meta={result.meta}
+                  />
+
+                  {/* Mistakes */}
+                  <Section
+                    title="Mistakes & Code Smells"
+                    icon={ICONS.mistake}
+                    items={filteredMistakes}
+                    meta={result.meta}
+                    renderExtra={(item) =>
+                      item.severity && (
+                        <span className={`severity-pill ${item.severity}`}>
+                          {item.severity}
+                        </span>
+                      )
+                    }
+                  />
+
+                  {/* Improvements */}
+                  <Section
+                    title="Actionable Improvements"
+                    icon={ICONS.improvement}
+                    items={result.improvements}
+                    meta={result.meta}
+                  />
+
+                  {/* Files Sampled */}
+                  {result.filesReviewed?.length > 0 && (
+                    <div className="glass files-card">
+                      <div className="card-title">
+                        📁 Sampled Files ({result.filesReviewed.length})
+                      </div>
+                      <div className="files-grid">
+                        {result.filesReviewed.map((f, i) => (
+                          <div key={i} className="file-badge">
+                            <span>{f.path}</span>
+                            <span className="file-size">{(f.size / 1024).toFixed(1)} KB</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              </section>
             )}
-          </div>
-        </section>
 
-        {/* Feature Showcase Grid */}
-        <section className="features-section" id="features">
-          <div className="section-head">
-            <div className="section-tag">ENGINEERED FOR DEVELOPERS</div>
-            <h2 className="section-title-text">Why Developers Love GitDev</h2>
-          </div>
+            {/* Feature Showcase Grid */}
+            <section className="features-section" id="features">
+              <div className="section-head">
+                <div className="section-tag">ENGINEERED FOR DEVELOPERS</div>
+                <h2 className="section-title-text">Why Developers Love GitDev</h2>
+              </div>
 
-          <div className="features-grid">
-            <div className="glass feature-card">
-              <div className="feature-icon-box">{ICONS.lightning}</div>
-              <h3>Parallel Context Batching</h3>
-              <p>
-                Pulls key source files, configs, and documentation concurrently over GitHub's raw API
-                in milliseconds.
-              </p>
+              <div className="features-grid">
+                <div className="glass feature-card">
+                  <div className="feature-icon-box">{ICONS.lightning}</div>
+                  <h3>Parallel Context Batching</h3>
+                  <p>
+                    Pulls key source files, configs, and documentation concurrently over GitHub's raw API
+                    in milliseconds.
+                  </p>
+                </div>
+
+                <div className="glass feature-card">
+                  <div className="feature-icon-box">{ICONS.shield}</div>
+                  <h3>Security & Vulnerability Ratings</h3>
+                  <p>
+                    Identifies hardcoded secrets, unhandled errors, missing rate limiters, and insecure
+                    input handling.
+                  </p>
+                </div>
+
+                <div className="glass feature-card">
+                  <div className="feature-icon-box">{ICONS.layers}</div>
+                  <h3>Monorepo & Subfolder Auditing</h3>
+                  <p>
+                    Seamlessly target specific packages or subfolders in large monorepo codebases.
+                  </p>
+                </div>
+
+                <div className="glass feature-card">
+                  <div className="feature-icon-box">{ICONS.code}</div>
+                  <h3>Clickable Code Citations</h3>
+                  <p>
+                    Every flagged mistake and improvement links directly to the target source file path on GitHub.
+                  </p>
+                </div>
+
+                <div className="glass feature-card">
+                  <div className="feature-icon-box">{ICONS.fileText}</div>
+                  <h3>Markdown & JSON Export</h3>
+                  <p>
+                    Export structured review summaries straight into pull request comments, issue trackers, or Slack.
+                  </p>
+                </div>
+
+                <div className="glass feature-card">
+                  <div className="feature-icon-box">{ICONS.star}</div>
+                  <h3>Instant In-Memory Caching</h3>
+                  <p>
+                    Repeated requests hit high-speed TTL caches for instant results without wasting API tokens.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* How It Works Steps */}
+            <section className="steps-section" id="how-it-works">
+              <div className="section-head">
+                <div className="section-tag">AUTOMATED WORKFLOW</div>
+                <h2 className="section-title-text">How GitDev Audits Code</h2>
+              </div>
+
+              <div className="steps-grid">
+                <div className="glass step-card">
+                  <div className="step-number">01</div>
+                  <h4>Paste Repository Link</h4>
+                  <p>Provide any public GitHub repository or subfolder URL to initiate the audit.</p>
+                </div>
+
+                <div className="glass step-card">
+                  <div className="step-number">02</div>
+                  <h4>Context Sampling</h4>
+                  <p>GitDev selects high-priority architecture files, configs, and source code modules.</p>
+                </div>
+
+                <div className="glass step-card">
+                  <div className="step-number">03</div>
+                  <h4>Gemini AI Evaluation</h4>
+                  <p>Gemini 2.0 Flash analyzes code quality and generates actionable grades and quick wins.</p>
+                </div>
+              </div>
+            </section>
+          </main>
+
+          {/* Footer */}
+          <footer className="footer">
+            <div className="footer-container">
+              <div className="footer-brand">
+                <img src="/logo.png" alt="GitDev Logo" />
+                <span>GitDev — AI Repository Auditor</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <span>Powered by Google Gemini 2.0 Flash & GitHub API</span>
+                <span
+                  className="footer-admin-link"
+                  onClick={() => setViewMode("admin")}
+                >
+                  🔒 Admin Portal
+                </span>
+              </div>
             </div>
-
-            <div className="glass feature-card">
-              <div className="feature-icon-box">{ICONS.shield}</div>
-              <h3>Security & Vulnerability Ratings</h3>
-              <p>
-                Identifies hardcoded secrets, unhandled errors, missing rate limiters, and insecure
-                input handling.
-              </p>
-            </div>
-
-            <div className="glass feature-card">
-              <div className="feature-icon-box">{ICONS.layers}</div>
-              <h3>Monorepo & Subfolder Auditing</h3>
-              <p>
-                Seamlessly target specific packages or subfolders in large monorepo codebases.
-              </p>
-            </div>
-
-            <div className="glass feature-card">
-              <div className="feature-icon-box">{ICONS.code}</div>
-              <h3>Clickable Code Citations</h3>
-              <p>
-                Every flagged mistake and improvement links directly to the target source file path on GitHub.
-              </p>
-            </div>
-
-            <div className="glass feature-card">
-              <div className="feature-icon-box">{ICONS.fileText}</div>
-              <h3>Markdown & JSON Export</h3>
-              <p>
-                Export structured review summaries straight into pull request comments, issue trackers, or Slack.
-              </p>
-            </div>
-
-            <div className="glass feature-card">
-              <div className="feature-icon-box">{ICONS.star}</div>
-              <h3>Instant In-Memory Caching</h3>
-              <p>
-                Repeated requests hit high-speed TTL caches for instant results without wasting API tokens.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* How It Works Steps */}
-        <section className="steps-section" id="how-it-works">
-          <div className="section-head">
-            <div className="section-tag">AUTOMATED WORKFLOW</div>
-            <h2 className="section-title-text">How GitDev Audits Code</h2>
-          </div>
-
-          <div className="steps-grid">
-            <div className="glass step-card">
-              <div className="step-number">01</div>
-              <h4>Paste Repository Link</h4>
-              <p>Provide any public GitHub repository or subfolder URL to initiate the audit.</p>
-            </div>
-
-            <div className="glass step-card">
-              <div className="step-number">02</div>
-              <h4>Context Sampling</h4>
-              <p>GitDev selects high-priority architecture files, configs, and source code modules.</p>
-            </div>
-
-            <div className="glass step-card">
-              <div className="step-number">03</div>
-              <h4>Gemini AI Evaluation</h4>
-              <p>Gemini 2.0 Flash analyzes code quality and generates actionable grades and quick wins.</p>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      {/* Footer */}
-      <footer className="footer">
-        <div className="footer-container">
-          <div className="footer-brand">
-            <img src="/logo.png" alt="GitDev Logo" />
-            <span>GitDev — AI Repository Auditor</span>
-          </div>
-          <div>Powered by Google Gemini 2.0 Flash & GitHub API</div>
+          </footer>
         </div>
-      </footer>
+      ) : (
+        /* Dedicated Admin Portal View */
+        <div className="container admin-portal">
+          <div className="glass admin-top-bar">
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <img src="/logo.png" alt="GitDev" style={{ width: 32, height: 32, borderRadius: 8 }} />
+              <div style={{ fontWeight: 800, fontSize: "1.1rem" }}>GitDev Command Center</div>
+              <span className="admin-status-pill">
+                <span className="status-dot"></span>
+                SYSTEM ONLINE
+              </span>
+            </div>
+
+            <button
+              className="btn-secondary"
+              onClick={() => setViewMode("public")}
+            >
+              ⬅ Return to Public Website
+            </button>
+          </div>
+
+          {!adminUnlocked ? (
+            /* Passcode Lock Screen */
+            <div className="glass admin-lock-card">
+              <div className="admin-lock-icon">{ICONS.lock}</div>
+              <h2>Admin Authentication Required</h2>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", marginTop: 6 }}>
+                Enter your security PIN/Passcode to unlock system analytics and repo logs.
+              </p>
+
+              <form onSubmit={handleAdminUnlock}>
+                <input
+                  type="password"
+                  className="admin-pass-input"
+                  placeholder="••••"
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value)}
+                  autoFocus
+                />
+                {passcodeError && (
+                  <div style={{ color: "var(--accent-rose)", fontSize: "0.82rem", marginBottom: 12 }}>
+                    ❌ Invalid Security Passcode (Try PIN: 7730)
+                  </div>
+                )}
+                <button type="submit" className="btn-primary" style={{ width: "100%", justifyContent: "center" }}>
+                  Unlock Admin Dashboard
+                </button>
+              </form>
+            </div>
+          ) : (
+            /* Unlocked Admin Analytics & History Dashboard */
+            <div>
+              {/* 4 Stats Grid */}
+              <div className="stats-grid">
+                <div className="glass stat-card">
+                  <div className="stat-icon">{ICONS.eye}</div>
+                  <div>
+                    <div className="stat-value">{visitCount}</div>
+                    <div className="stat-label">Total Site Visits</div>
+                  </div>
+                </div>
+
+                <div className="glass stat-card">
+                  <div className="stat-icon">{ICONS.chart}</div>
+                  <div>
+                    <div className="stat-value">{totalAudits}</div>
+                    <div className="stat-label">Repos Evaluated</div>
+                  </div>
+                </div>
+
+                <div className="glass stat-card">
+                  <div className="stat-icon">{ICONS.star}</div>
+                  <div>
+                    <div className="stat-value">{avgScore} / 100</div>
+                    <div className="stat-label">Global Avg Score</div>
+                  </div>
+                </div>
+
+                <div className="glass stat-card">
+                  <div className="stat-icon">{ICONS.code}</div>
+                  <div>
+                    <div className="stat-value" style={{ fontSize: "1.4rem" }}>
+                      {topLanguage}
+                    </div>
+                    <div className="stat-label">Top Language</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* History Log Table Card */}
+              <div className="glass history-card-container">
+                <div className="history-header">
+                  <div className="history-title-group">
+                    <h3>Evaluated Repositories Log</h3>
+                    <p>Tracked user activity and repository audit reports</p>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    <div className="history-search">
+                      {ICONS.search}
+                      <input
+                        type="text"
+                        placeholder="Search logs by repo or language..."
+                        value={searchHistoryQuery}
+                        onChange={(e) => setSearchHistoryQuery(e.target.value)}
+                      />
+                    </div>
+
+                    {history.length > 0 && (
+                      <button className="btn-secondary" onClick={handleClearAllHistory}>
+                        {ICONS.trash}
+                        <span>Clear All Logs</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {filteredHistory.length === 0 ? (
+                  <div className="empty-history">
+                    {searchHistoryQuery
+                      ? "No audit records match your search."
+                      : "No audit logs recorded yet."}
+                  </div>
+                ) : (
+                  <div className="history-list">
+                    {filteredHistory.map((item, index) => (
+                      <div key={index} className="history-item">
+                        <div className="history-item-left">
+                          <div
+                            className="history-grade-pill"
+                            style={{
+                              color:
+                                item.overallScore >= 80
+                                  ? "#10b981"
+                                  : item.overallScore >= 68
+                                  ? "#06b6d4"
+                                  : item.overallScore >= 50
+                                  ? "#f59e0b"
+                                  : "#f43f5e",
+                            }}
+                          >
+                            {item.grade || "B"}
+                          </div>
+                          <div>
+                            <div className="history-repo-name">{item.meta.name}</div>
+                            <div className="history-repo-meta">
+                              <span>⭐ {item.meta.stars || 0} stars</span>
+                              <span>•</span>
+                              <span>🔤 {item.meta.language || "Unknown"}</span>
+                              <span>•</span>
+                              <span>Score: {item.overallScore}/100</span>
+                              <span>•</span>
+                              <span>{item.evaluatedAtFormatted || "Recently"}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="history-item-right">
+                          <button
+                            className="btn-secondary"
+                            onClick={() => handleInspectHistoryItem(item)}
+                          >
+                            Inspect Audit
+                          </button>
+                          <button
+                            className="btn-icon-danger"
+                            title="Delete log entry"
+                            onClick={() => handleDeleteHistoryItem(item.meta.name)}
+                          >
+                            {ICONS.trash}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
