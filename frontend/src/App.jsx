@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const QUICK_REPOS = [
@@ -101,6 +101,31 @@ const ICONS = {
       <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
     </svg>
   ),
+  trash: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    </svg>
+  ),
+  history: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  ),
+  chart: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="18" y1="20" x2="18" y2="10" />
+      <line x1="12" y1="20" x2="12" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  ),
+  eye: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
 };
 
 function ScoreGauge({ score, grade }) {
@@ -198,6 +223,78 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [severityFilter, setSeverityFilter] = useState("all");
   const [toastMessage, setToastMessage] = useState("");
+  const [searchHistoryQuery, setSearchHistoryQuery] = useState("");
+
+  // Track visit count
+  const [visitCount, setVisitCount] = useState(1);
+  useEffect(() => {
+    try {
+      const savedCount = parseInt(localStorage.getItem("gitdev_visit_count") || "0", 10) + 1;
+      localStorage.setItem("gitdev_visit_count", savedCount.toString());
+      setVisitCount(savedCount);
+    } catch {
+      // Fallback
+    }
+  }, []);
+
+  // Track audit history
+  const [history, setHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem("gitdev_audit_history");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  function saveAuditToHistory(auditData) {
+    setHistory((prev) => {
+      const filtered = prev.filter((item) => item.meta.name !== auditData.meta.name);
+      const updated = [
+        {
+          ...auditData,
+          evaluatedAtFormatted: new Date().toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        },
+        ...filtered,
+      ];
+      try {
+        localStorage.setItem("gitdev_audit_history", JSON.stringify(updated));
+      } catch {
+        // Fallback if local storage full
+      }
+      return updated;
+    });
+  }
+
+  function handleDeleteHistoryItem(repoName) {
+    setHistory((prev) => {
+      const updated = prev.filter((item) => item.meta.name !== repoName);
+      localStorage.setItem("gitdev_audit_history", JSON.stringify(updated));
+      return updated;
+    });
+    showToast("🗑️ Audit entry removed from history.");
+  }
+
+  function handleClearAllHistory() {
+    if (window.confirm("Are you sure you want to clear your entire audit history?")) {
+      setHistory([]);
+      localStorage.removeItem("gitdev_audit_history");
+      showToast("🧹 Audit history cleared!");
+    }
+  }
+
+  function handleInspectHistoryItem(auditData) {
+    setResult(auditData);
+    setRepoUrl(`https://github.com/${auditData.meta.name}`);
+    setTimeout(() => {
+      document.getElementById("results-dashboard")?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  }
 
   function showToast(msg) {
     setToastMessage(msg);
@@ -221,7 +318,8 @@ export default function App() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Evaluation failed.");
       setResult(data);
-      // Smooth scroll to results
+      saveAuditToHistory(data);
+
       setTimeout(() => {
         document.getElementById("results-dashboard")?.scrollIntoView({ behavior: "smooth" });
       }, 100);
@@ -280,6 +378,34 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
     return (m.severity || "").toLowerCase() === severityFilter;
   });
 
+  // Calculate user analytics
+  const totalAudits = history.length;
+  const avgScore =
+    totalAudits > 0
+      ? Math.round(history.reduce((sum, h) => sum + (h.overallScore || 0), 0) / totalAudits)
+      : 0;
+
+  // Calculate most frequent language
+  const languageCounts = {};
+  history.forEach((h) => {
+    if (h.meta?.language) {
+      languageCounts[h.meta.language] = (languageCounts[h.meta.language] || 0) + 1;
+    }
+  });
+  const topLanguage =
+    Object.keys(languageCounts).length > 0
+      ? Object.entries(languageCounts).sort((a, b) => b[1] - a[1])[0][0]
+      : "N/A";
+
+  const filteredHistory = history.filter((h) => {
+    if (!searchHistoryQuery.trim()) return true;
+    const q = searchHistoryQuery.toLowerCase();
+    return (
+      h.meta.name.toLowerCase().includes(q) ||
+      (h.meta.language && h.meta.language.toLowerCase().includes(q))
+    );
+  });
+
   return (
     <div>
       {toastMessage && <div className="toast">{toastMessage}</div>}
@@ -295,6 +421,10 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
           <div className="nav-links">
             <a href="#auditor" className="nav-link">
               Auditor
+            </a>
+            <a href="#user-dashboard" className="nav-link">
+              <span>My History</span>
+              {history.length > 0 && <span className="badge-count">{history.length}</span>}
             </a>
             <a href="#features" className="nav-link">
               Features
@@ -408,7 +538,7 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
 
         {/* Results Dashboard */}
         {result && (
-          <section id="results-dashboard" style={{ paddingTop: 30, marginBottom: 80 }}>
+          <section id="results-dashboard" style={{ paddingTop: 30, marginBottom: 60 }}>
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
               {/* Header Card */}
               <div className="glass repo-header-card">
@@ -634,6 +764,140 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
             </motion.div>
           </section>
         )}
+
+        {/* User Analytics & Audit History Dashboard */}
+        <section className="history-dashboard" id="user-dashboard">
+          <div className="section-head" style={{ marginBottom: 36 }}>
+            <div className="section-tag">PERSONAL ANALYTICS</div>
+            <h2 className="section-title-text">My Audit Dashboard & History</h2>
+          </div>
+
+          {/* 4 Stats Grid */}
+          <div className="stats-grid">
+            <div className="glass stat-card">
+              <div className="stat-icon">{ICONS.eye}</div>
+              <div>
+                <div className="stat-value">{visitCount}</div>
+                <div className="stat-label">Total Visits</div>
+              </div>
+            </div>
+
+            <div className="glass stat-card">
+              <div className="stat-icon">{ICONS.chart}</div>
+              <div>
+                <div className="stat-value">{totalAudits}</div>
+                <div className="stat-label">Repos Audited</div>
+              </div>
+            </div>
+
+            <div className="glass stat-card">
+              <div className="stat-icon">{ICONS.star}</div>
+              <div>
+                <div className="stat-value">{avgScore} / 100</div>
+                <div className="stat-label">Average Score</div>
+              </div>
+            </div>
+
+            <div className="glass stat-card">
+              <div className="stat-icon">{ICONS.code}</div>
+              <div>
+                <div className="stat-value" style={{ fontSize: "1.4rem" }}>
+                  {topLanguage}
+                </div>
+                <div className="stat-label">Top Language</div>
+              </div>
+            </div>
+          </div>
+
+          {/* History List Card */}
+          <div className="glass history-card-container">
+            <div className="history-header">
+              <div className="history-title-group">
+                <h3>Audited Repositories History</h3>
+                <p>Saved locally in your browser session for quick access</p>
+              </div>
+
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <div className="history-search">
+                  {ICONS.search}
+                  <input
+                    type="text"
+                    placeholder="Search history by repo or language..."
+                    value={searchHistoryQuery}
+                    onChange={(e) => setSearchHistoryQuery(e.target.value)}
+                  />
+                </div>
+
+                {history.length > 0 && (
+                  <button className="btn-secondary" onClick={handleClearAllHistory}>
+                    {ICONS.trash}
+                    <span>Clear All</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {filteredHistory.length === 0 ? (
+              <div className="empty-history">
+                {searchHistoryQuery
+                  ? "No audited repositories match your search."
+                  : "No audit history yet. Audit a repository above to track it here!"}
+              </div>
+            ) : (
+              <div className="history-list">
+                {filteredHistory.map((item, index) => (
+                  <div key={index} className="history-item">
+                    <div className="history-item-left">
+                      <div
+                        className="history-grade-pill"
+                        style={{
+                          color:
+                            item.overallScore >= 80
+                              ? "#10b981"
+                              : item.overallScore >= 68
+                              ? "#06b6d4"
+                              : item.overallScore >= 50
+                              ? "#f59e0b"
+                              : "#f43f5e",
+                        }}
+                      >
+                        {item.grade || "B"}
+                      </div>
+                      <div>
+                        <div className="history-repo-name">{item.meta.name}</div>
+                        <div className="history-repo-meta">
+                          <span>⭐ {item.meta.stars || 0} stars</span>
+                          <span>•</span>
+                          <span>🔤 {item.meta.language || "Unknown"}</span>
+                          <span>•</span>
+                          <span>Score: {item.overallScore}/100</span>
+                          <span>•</span>
+                          <span>{item.evaluatedAtFormatted || "Recently"}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="history-item-right">
+                      <button
+                        className="btn-secondary"
+                        onClick={() => handleInspectHistoryItem(item)}
+                      >
+                        Re-Inspect
+                      </button>
+                      <button
+                        className="btn-icon-danger"
+                        title="Delete from history"
+                        onClick={() => handleDeleteHistoryItem(item.meta.name)}
+                      >
+                        {ICONS.trash}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
 
         {/* Feature Showcase Grid */}
         <section className="features-section" id="features">
