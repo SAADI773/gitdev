@@ -151,8 +151,243 @@ const ICONS = {
       <line x1="12" y1="9" x2="12" y2="13" />
       <line x1="12" y1="17" x2="12.01" y2="17" />
     </svg>
+  ),
+  cpu: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <rect x="9" y="9" width="6" height="6" />
+      <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 15h3M1 9h3M1 15h3" />
+    </svg>
+  ),
+  sparkles: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 2l2.4 5.6L20 10l-5.6 2.4L12 18l-2.4-5.6L4 10l5.6-2.4z" />
+      <path d="M19 16l1.2 2.8L23 20l-2.8 1.2L19 24l-1.2-2.8L15 20l2.8-1.2z" />
+    </svg>
+  ),
+  brain: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 11 18v-1h2v1a4 4 0 1 0 6.967-0.517 4 4 0 0 0 .556-6.588 4 4 0 0 0-2.526-5.77A3 3 0 0 0 12 5z" />
+    </svg>
+  ),
+  rocket: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+      <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-3.05 11a22.35 22.35 0 0 1-3.95 2z" />
+      <path d="M9 12l-5 5M12 15l5 5" />
+    </svg>
+  ),
+  key: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="7.5" cy="15.5" r="5.5" />
+      <path d="M21 2l-9.6 9.6M15.5 7.5l3 3M18.5 4.5l3 3" />
+    </svg>
+  ),
+  close: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  ),
+  eyeOff: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
   )
 };
+
+const MODEL_OPTIONS = {
+  gemini: {
+    name: "Google Gemini",
+    icon: ICONS.sparkles,
+    color: "#a78bfa",
+    models: [
+      { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash", badge: "Recommended • Ultra Fast", desc: "Latest high-speed model optimized for code analysis" },
+      { id: "gemini-1.5-pro", label: "Gemini 1.5 Pro", badge: "Deep Reasoning", desc: "Highest intelligence for complex multi-file architectures" },
+      { id: "gemini-2.0-flash", label: "Gemini 2.0 Flash", badge: "Next-Gen Speed", desc: "Next-generation low latency model" },
+      { id: "gemini-1.5-flash", label: "Gemini 1.5 Flash", badge: "Lightweight", desc: "Balanced performance and response speed" },
+    ],
+  },
+  grok: {
+    name: "xAI Grok",
+    icon: ICONS.rocket,
+    color: "#06b6d4",
+    models: [
+      { id: "grok-2-latest", label: "Grok 2 (Latest)", badge: "Recommended • xAI Flagship", desc: "xAI's frontier model with strong coding capabilities" },
+      { id: "grok-beta", label: "Grok Beta", badge: "High Speed", desc: "Fast Grok reasoning engine for general audits" },
+      { id: "grok-vision-beta", label: "Grok Vision Beta", badge: "Multimodal", desc: "Experimental vision and language processing model" },
+    ],
+  },
+  openai: {
+    name: "OpenAI",
+    icon: ICONS.brain,
+    color: "#10b981",
+    models: [
+      { id: "gpt-4o", label: "GPT-4o", badge: "Recommended • Multimodal Flagship", desc: "OpenAI's flagship high-intelligence model" },
+      { id: "gpt-4o-mini", label: "GPT-4o Mini", badge: "Fast & Efficient", desc: "Ultra-fast, cost-efficient model for quick reviews" },
+      { id: "gpt-4-turbo", label: "GPT-4 Turbo", badge: "High Intelligence", desc: "Deep code analysis and complex pattern detection" },
+      { id: "gpt-3.5-turbo", label: "GPT-3.5 Turbo", badge: "Legacy Standard", desc: "Classic fast language model" },
+    ],
+  },
+};
+
+function ModelSelectionModal({ isOpen, onClose, currentConfig, onSaveConfig }) {
+  const [selectedProvider, setSelectedProvider] = useState(currentConfig.provider || "gemini");
+  const [selectedModel, setSelectedModel] = useState(currentConfig.model || "gemini-2.5-flash");
+  const [apiKey, setApiKey] = useState(currentConfig.apiKey || "");
+  const [showApiKey, setShowApiKey] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedProvider(currentConfig.provider || "gemini");
+      setSelectedModel(currentConfig.model || "gemini-2.5-flash");
+      setApiKey(currentConfig.apiKey || "");
+    }
+  }, [isOpen, currentConfig]);
+
+  function handleProviderSelect(pKey) {
+    setSelectedProvider(pKey);
+    const defaultModel = MODEL_OPTIONS[pKey]?.models[0]?.id || "gemini-2.5-flash";
+    setSelectedModel(defaultModel);
+  }
+
+  function handleSave() {
+    onSaveConfig({
+      provider: selectedProvider,
+      model: selectedModel,
+      apiKey: apiKey.trim(),
+    });
+    onClose();
+  }
+
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <div className="modal-backdrop" onClick={onClose}>
+        <motion.div
+          className="modal-container glass"
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="modal-header">
+            <div className="modal-title-group">
+              <div className="modal-title-icon">{ICONS.cpu}</div>
+              <div>
+                <h3 className="modal-title">AI Model & API Configuration</h3>
+                <p className="modal-subtitle">
+                  Select your preferred AI provider, model, and custom API key
+                </p>
+              </div>
+            </div>
+            <button className="modal-close-btn" onClick={onClose} title="Close">
+              {ICONS.close}
+            </button>
+          </div>
+
+          <div className="modal-body">
+            {/* Step 1: Provider Tabs */}
+            <div className="modal-section-label">1. Choose AI Provider</div>
+            <div className="provider-grid">
+              {Object.entries(MODEL_OPTIONS).map(([pKey, pData]) => {
+                const isSelected = selectedProvider === pKey;
+                return (
+                  <button
+                    key={pKey}
+                    type="button"
+                    className={`provider-card ${isSelected ? "selected" : ""}`}
+                    style={{
+                      "--provider-color": pData.color,
+                    }}
+                    onClick={() => handleProviderSelect(pKey)}
+                  >
+                    <div className="provider-icon">{pData.icon}</div>
+                    <div className="provider-name">{pData.name}</div>
+                    {isSelected && <div className="provider-badge-active">Active</div>}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Step 2: Model Options */}
+            <div className="modal-section-label">
+              2. Select Model for {MODEL_OPTIONS[selectedProvider]?.name}
+            </div>
+            <div className="model-list">
+              {(MODEL_OPTIONS[selectedProvider]?.models || []).map((m) => {
+                const isSelected = selectedModel === m.id;
+                return (
+                  <div
+                    key={m.id}
+                    className={`model-option-card ${isSelected ? "selected" : ""}`}
+                    onClick={() => setSelectedModel(m.id)}
+                  >
+                    <div className="model-radio">
+                      <input
+                        type="radio"
+                        name="modelSelection"
+                        checked={isSelected}
+                        onChange={() => setSelectedModel(m.id)}
+                      />
+                    </div>
+                    <div className="model-info">
+                      <div className="model-title-row">
+                        <span className="model-label">{m.label}</span>
+                        <span className="model-badge">{m.badge}</span>
+                      </div>
+                      <div className="model-desc">{m.desc}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Step 3: API Key */}
+            <div className="modal-section-label">
+              3. Custom API Key for {MODEL_OPTIONS[selectedProvider]?.name} (Optional)
+            </div>
+            <div className="api-key-container">
+              <div className="api-key-input-wrapper">
+                <div className="api-key-icon">{ICONS.key}</div>
+                <input
+                  type={showApiKey ? "text" : "password"}
+                  className="api-key-input"
+                  placeholder={`Enter custom ${MODEL_OPTIONS[selectedProvider]?.name} API Key (Leave empty to use server key)`}
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="api-key-toggle-btn"
+                  onClick={() => setShowApiKey(!showApiKey)}
+                  title={showApiKey ? "Hide Key" : "Show Key"}
+                >
+                  {showApiKey ? ICONS.eyeOff : ICONS.eye}
+                </button>
+              </div>
+              <p className="api-key-note">
+                🔒 Keys are saved in your browser storage and sent safely to the backend server.
+                If left empty, GitDev will default to using backend environment variables.
+              </p>
+            </div>
+          </div>
+
+          <div className="modal-footer">
+            <button type="button" className="btn-cancel" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="button" className="btn-confirm" onClick={handleSave}>
+              Confirm & Apply Model
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+}
 
 function ScoreGauge({ score, grade }) {
   const radius = 32;
@@ -250,6 +485,29 @@ export default function App() {
   const [severityFilter, setSeverityFilter] = useState("all");
   const [toastMessage, setToastMessage] = useState("");
   const [searchHistoryQuery, setSearchHistoryQuery] = useState("");
+
+  // Model & API selection state
+  const [modelConfig, setModelConfig] = useState(() => {
+    try {
+      const saved = localStorage.getItem("gitdev_model_config");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+      provider: "gemini",
+      model: "gemini-2.5-flash",
+      apiKey: "",
+    };
+  });
+  const [isModelModalOpen, setIsModelModalOpen] = useState(false);
+
+  function handleSaveModelConfig(newConfig) {
+    setModelConfig(newConfig);
+    try {
+      localStorage.setItem("gitdev_model_config", JSON.stringify(newConfig));
+    } catch {}
+    const providerName = MODEL_OPTIONS[newConfig.provider]?.name || newConfig.provider;
+    showToast(`Model updated to ${providerName} (${newConfig.model})`);
+  }
 
   // Mode routing: "public" vs "admin"
   const [viewMode, setViewMode] = useState(() => {
@@ -394,7 +652,13 @@ const AUTHORIZED_ADMIN_HASHES = new Set([
       const res = await fetch("/api/evaluate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ repoUrl: targetUrl, forceRefresh: bypassCache }),
+        body: JSON.stringify({
+          repoUrl: targetUrl,
+          forceRefresh: bypassCache,
+          provider: modelConfig.provider,
+          model: modelConfig.model,
+          apiKey: modelConfig.apiKey,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Evaluation failed.");
@@ -502,6 +766,26 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
               </a>
 
               <div className="nav-links">
+                <button
+                  type="button"
+                  className="nav-model-btn"
+                  onClick={() => setIsModelModalOpen(true)}
+                  title="Click to select AI Model & API Key"
+                >
+                  <span
+                    className="model-dot"
+                    style={{ background: MODEL_OPTIONS[modelConfig.provider]?.color || "#a78bfa" }}
+                  ></span>
+                  <span className="model-btn-provider">
+                    {MODEL_OPTIONS[modelConfig.provider]?.name || "Gemini"}
+                  </span>
+                  <span className="model-btn-name">{modelConfig.model}</span>
+                  {modelConfig.apiKey && (
+                    <span className="custom-key-indicator" title="Custom API Key active">
+                      🔑 Key
+                    </span>
+                  )}
+                </button>
                 <a href="#auditor" className="nav-link">
                   Auditor
                 </a>
@@ -527,10 +811,22 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
           <main className="container">
             {/* Hero Section */}
             <section className="hero-section" id="auditor">
-              <div className="brand-badge">
-                {ICONS.lightning}
-                <span>Powered by Gemini 2.0 Flash & GitHub API</span>
+              <div className="model-status-bar" onClick={() => setIsModelModalOpen(true)}>
+                <div className="model-status-info">
+                  {ICONS.cpu}
+                  <span>Active Engine:</span>
+                  <strong style={{ color: MODEL_OPTIONS[modelConfig.provider]?.color || "#a78bfa" }}>
+                    {MODEL_OPTIONS[modelConfig.provider]?.name || "Gemini"} ({modelConfig.model})
+                  </strong>
+                  <span className="model-key-status">
+                    {modelConfig.apiKey ? "• Custom Key Active" : "• System Default Key"}
+                  </span>
+                </div>
+                <button className="model-change-link" type="button">
+                  Select Model & API &rarr;
+                </button>
               </div>
+
               <h1 className="hero-title">Automated AI Code Audits for Any GitHub Repository</h1>
               <p className="hero-subtitle">
                 Instantly evaluate codebase architecture, detect security vulnerabilities, highlight
@@ -616,7 +912,8 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
                     </motion.div>
                     <div className="loading-text">Performing Repository Audit</div>
                     <div className="loading-subtext">
-                      Fetching file tree, extracting key source files, and running Gemini AI evaluation...
+                      Fetching file tree, extracting key source files, and evaluating with{" "}
+                      {MODEL_OPTIONS[modelConfig.provider]?.name || "AI"} ({modelConfig.model})...
                     </div>
                   </motion.div>
                 )}
@@ -644,6 +941,18 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
                       <p className="repo-desc">
                         {result.meta.description || "No repository description provided."}
                       </p>
+                      <div className="result-model-badge">
+                        {ICONS.cpu}
+                        <span>
+                          Evaluated with{" "}
+                          <strong>
+                            {result.selectedProvider
+                              ? MODEL_OPTIONS[result.selectedProvider]?.name || result.selectedProvider
+                              : MODEL_OPTIONS[modelConfig.provider]?.name}
+                          </strong>{" "}
+                          ({result.selectedModel || modelConfig.model})
+                        </span>
+                      </div>
                       <div className="repo-badges">
                         {result.meta.language && (
                           <span className="badge">
@@ -1161,6 +1470,14 @@ ${(result.improvements || []).map((i) => `- **${i.title}**: ${i.detail}`).join("
           )}
         </div>
       )}
+
+      {/* Model & API Selection Modal Container */}
+      <ModelSelectionModal
+        isOpen={isModelModalOpen}
+        onClose={() => setIsModelModalOpen(false)}
+        currentConfig={modelConfig}
+        onSaveConfig={handleSaveModelConfig}
+      />
     </div>
   );
 }

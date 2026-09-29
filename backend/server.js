@@ -30,7 +30,7 @@ function setCached(key, data) {
 }
 
 app.post("/api/evaluate", async (req, res) => {
-  const { repoUrl, forceRefresh } = req.body;
+  const { repoUrl, forceRefresh, provider, model, apiKey } = req.body;
 
   if (!repoUrl || typeof repoUrl !== "string") {
     return res.status(400).json({ error: "repoUrl parameter is required." });
@@ -38,10 +38,20 @@ app.post("/api/evaluate", async (req, res) => {
 
   try {
     const { owner, repo, branch, subfolder } = parseRepoUrl(repoUrl);
-    const cacheKey = `${owner}/${repo}:${branch || "default"}:${subfolder}`;
+    const selectedProvider = (provider || "gemini").toLowerCase();
+    const selectedModel =
+      model ||
+      (selectedProvider === "openai"
+        ? "gpt-4o"
+        : selectedProvider === "grok"
+        ? "grok-2-latest"
+        : "gemini-2.5-flash");
 
-    // Check cache unless forceRefresh is true
-    if (!forceRefresh) {
+    // Include provider and model in cache key so switching models forces new evaluation
+    const cacheKey = `${owner}/${repo}:${branch || "default"}:${subfolder}:${selectedProvider}:${selectedModel}`;
+
+    // Check cache unless forceRefresh is true or custom apiKey is provided
+    if (!forceRefresh && !apiKey) {
       const cachedResult = getCached(cacheKey);
       if (cachedResult) {
         return res.json({ ...cachedResult, isCached: true });
@@ -56,11 +66,17 @@ app.post("/api/evaluate", async (req, res) => {
       });
     }
 
-    const evaluation = await evaluateRepo(bundle);
+    const evaluation = await evaluateRepo(bundle, {
+      provider: selectedProvider,
+      model: selectedModel,
+      apiKey: apiKey,
+    });
     const responsePayload = { ...evaluation, isCached: false };
 
-    // Cache evaluation
-    setCached(cacheKey, responsePayload);
+    // Cache evaluation if no custom key was used
+    if (!apiKey) {
+      setCached(cacheKey, responsePayload);
+    }
 
     res.json(responsePayload);
   } catch (err) {
@@ -78,6 +94,8 @@ app.get("/api/health", (_req, res) => {
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
     geminiKeyConfigured: Boolean(process.env.GEMINI_API_KEY),
+    openaiKeyConfigured: Boolean(process.env.OPENAI_API_KEY),
+    grokKeyConfigured: Boolean(process.env.GROK_API_KEY || process.env.XAI_API_KEY),
     githubTokenConfigured: Boolean(process.env.GITHUB_TOKEN),
   });
 });
